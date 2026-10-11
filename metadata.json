@@ -1,0 +1,6 @@
+{
+  "name": "Busca Busca - Shopee & MCP Assistant",
+  "description": "Buscador de ofertas Shopee com gerador oficial de links de afiliado, servidor MCP remoto e suporte a ChatGPT Apps SDK.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
