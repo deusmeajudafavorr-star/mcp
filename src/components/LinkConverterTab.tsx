@@ -87,25 +87,25 @@ export const LinkConverterTab: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1">
-                Sub-ID 1 (opcional, ex: instagram):
+                Sub-ID 1 (opcional, alfanumérico):
               </label>
               <input
                 type="text"
                 value={subId1}
-                onChange={(e) => setSubId1(e.target.value)}
-                placeholder="canal-youtube"
+                onChange={(e) => setSubId1(e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20))}
+                placeholder="instagram"
                 className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1">
-                Sub-ID 2 (opcional, ex: campanha-maio):
+                Sub-ID 2 (opcional, alfanumérico):
               </label>
               <input
                 type="text"
                 value={subId2}
-                onChange={(e) => setSubId2(e.target.value)}
-                placeholder="promocao-especial"
+                onChange={(e) => setSubId2(e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20))}
+                placeholder="campanhamaio"
                 className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500"
               />
             </div>

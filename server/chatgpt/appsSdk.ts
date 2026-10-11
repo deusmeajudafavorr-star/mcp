@@ -32,10 +32,10 @@ export function buildChatGPTProductWidget(
       title: product.productName,
       image_url: product.imageUrl,
       price: {
-        current: product.price,
-        original: product.priceMax && product.priceMax > product.price ? product.priceMax : undefined,
+        current: Number(product.price) || 0,
+        original: product.priceMax && Number(product.priceMax) > Number(product.price) ? Number(product.priceMax) : undefined,
         currency: 'BRL',
-        formatted: `R$ ${product.price.toFixed(2).replace('.', ',')}`,
+        formatted: `R$ ${(Number(product.price) || 0).toFixed(2).replace('.', ',')}`,
         discount_percentage: product.priceDiscountRate ? `${product.priceDiscountRate}% OFF` : undefined,
       },
       seller: {

@@ -373,19 +373,47 @@ export class ShopeeAffiliateClient {
       };
     }
 
-    const mutation = `
-      mutation GenerateAffiliateShortLink($originUrl: String!, $subIds: [String]) {
-        generateShortLink(input: { originUrl: $originUrl, subIds: $subIds }) {
-          shortLink
+    const cleanSubIds =
+      subIds && subIds.length > 0
+        ? subIds
+            .map(s => (typeof s === 'string' ? s.trim().replace(/[^a-zA-Z0-9]/g, '') : ''))
+            .filter(s => s.length > 0 && s.length <= 20)
+            .slice(0, 5)
+        : undefined;
+
+    let mutation: string;
+    let variables: Record<string, unknown>;
+
+    if (cleanSubIds && cleanSubIds.length > 0) {
+      mutation = `
+        mutation GenerateAffiliateShortLink($originUrl: String!, $subIds: [String!]) {
+          generateShortLink(input: { originUrl: $originUrl, subIds: $subIds }) {
+            shortLink
+          }
         }
-      }
-    `;
+      `;
+      variables = {
+        originUrl: cleanUrl,
+        subIds: cleanSubIds,
+      };
+    } else {
+      mutation = `
+        mutation GenerateAffiliateShortLink($originUrl: String!) {
+          generateShortLink(input: { originUrl: $originUrl }) {
+            shortLink
+          }
+        }
+      `;
+      variables = {
+        originUrl: cleanUrl,
+      };
+    }
 
     try {
-      const result = await this.executeGraphQL<{ generateShortLink: { shortLink: string } }>(mutation, {
-        originUrl: cleanUrl,
-        subIds: subIds && subIds.length > 0 ? subIds.slice(0, 5) : undefined,
-      });
+      const result = await this.executeGraphQL<{ generateShortLink: { shortLink: string } }>(
+        mutation,
+        variables
+      );
 
       const shortLink = result?.generateShortLink?.shortLink;
 
@@ -399,7 +427,7 @@ export class ShopeeAffiliateClient {
         success: true,
         originUrl: cleanUrl,
         shortLink,
-        subIds,
+        subIds: cleanSubIds,
         generatedAt: new Date().toISOString(),
         affiliateDisclaimer: AFFILIATE_DISCLAIMER,
       };
@@ -408,7 +436,7 @@ export class ShopeeAffiliateClient {
       return {
         success: false,
         originUrl: cleanUrl,
-        subIds,
+        subIds: cleanSubIds,
         generatedAt: new Date().toISOString(),
         affiliateDisclaimer: AFFILIATE_DISCLAIMER,
         error: `Falha na API da Shopee: ${err.message}`,
@@ -486,11 +514,39 @@ export class ShopeeAffiliateClient {
           sortType,
         });
 
-        const nodes = res?.productOfferV2?.nodes || [];
+        const rawNodes = res?.productOfferV2?.nodes || [];
         const pageInfo = res?.productOfferV2?.pageInfo || { page, limit, hasNextPage: false };
 
+        // Normalização defensiva de números (preço, avaliações, vendas) vindos da API
+        const normalizedNodes: ShopeeProductOffer[] = rawNodes.map((p: any) => {
+          const numPrice = typeof p.price === 'number' ? p.price : parseFloat(String(p.price || 0)) || 0;
+          const numPriceMin = typeof p.priceMin === 'number' ? p.priceMin : p.priceMin ? parseFloat(String(p.priceMin)) : undefined;
+          const numPriceMax = typeof p.priceMax === 'number' ? p.priceMax : p.priceMax ? parseFloat(String(p.priceMax)) : undefined;
+          const numDiscount = typeof p.priceDiscountRate === 'number' ? p.priceDiscountRate : p.priceDiscountRate ? parseFloat(String(p.priceDiscountRate)) : undefined;
+          const numRating = typeof p.ratingStar === 'number' ? p.ratingStar : p.ratingStar ? parseFloat(String(p.ratingStar)) : undefined;
+          const numSales = typeof p.sales === 'number' ? p.sales : p.sales ? parseInt(String(p.sales), 10) : undefined;
+          const numComm = typeof p.commissionRate === 'number' ? p.commissionRate : p.commissionRate ? parseFloat(String(p.commissionRate)) : undefined;
+
+          return {
+            ...p,
+            itemId: String(p.itemId || ''),
+            productName: String(p.productName || 'Produto Shopee'),
+            imageUrl: String(p.imageUrl || ''),
+            productLink: String(p.productLink || ''),
+            offerLink: p.offerLink ? String(p.offerLink) : undefined,
+            price: numPrice || numPriceMin || 0,
+            priceMin: numPriceMin,
+            priceMax: numPriceMax,
+            priceDiscountRate: numDiscount,
+            ratingStar: numRating,
+            sales: numSales,
+            commissionRate: numComm,
+            currency: 'BRL',
+          };
+        });
+
         // Aplica filtros de preço se especificados
-        let filtered = nodes;
+        let filtered = normalizedNodes;
         if (params.min_price !== undefined) {
           filtered = filtered.filter(p => p.price >= (params.min_price || 0));
         }
@@ -499,7 +555,7 @@ export class ShopeeAffiliateClient {
         }
 
         return {
-          products: filtered.map(p => ({ ...p, currency: 'BRL' })),
+          products: filtered,
           total: filtered.length,
           page: pageInfo.page,
           limit: pageInfo.limit,

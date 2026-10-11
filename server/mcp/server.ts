@@ -275,8 +275,8 @@ export class McpServer {
           `----------------------------------------`,
           `Título: ${product.productName}`,
           `ID do Item: ${product.itemId}`,
-          `Preço Atual: R$ ${product.price.toFixed(2).replace('.', ',')}`,
-          product.priceMax ? `Preço Anterior: R$ ${product.priceMax.toFixed(2).replace('.', ',')}` : null,
+          `Preço Atual: R$ ${Number(product.price || 0).toFixed(2).replace('.', ',')}`,
+          product.priceMax ? `Preço Anterior: R$ ${Number(product.priceMax).toFixed(2).replace('.', ',')}` : null,
           product.priceDiscountRate ? `Desconto: ${product.priceDiscountRate}% OFF` : null,
           `Loja: ${product.shopName || 'Loja Shopee'}`,
           product.ratingStar ? `Avaliação: ${product.ratingStar.toFixed(1)} / 5.0 estrelas` : null,
@@ -393,10 +393,11 @@ export class McpServer {
     ];
 
     products.forEach((p: any, index: number) => {
+      const priceNum = typeof p.price === 'number' ? p.price : Number(p.price) || 0;
       lines.push(`${index + 1}. ${p.productName}`);
-      lines.push(`   💰 Preço: R$ ${p.price.toFixed(2).replace('.', ',')}${p.priceDiscountRate ? ` (${p.priceDiscountRate}% OFF)` : ''}`);
-      if (p.ratingStar) lines.push(`   ⭐ Avaliação: ${p.ratingStar.toFixed(1)} / 5.0`);
-      if (p.sales) lines.push(`   📦 Vendas: ${p.sales.toLocaleString('pt-BR')} unidades`);
+      lines.push(`   💰 Preço: R$ ${priceNum.toFixed(2).replace('.', ',')}${p.priceDiscountRate ? ` (${p.priceDiscountRate}% OFF)` : ''}`);
+      if (p.ratingStar) lines.push(`   ⭐ Avaliação: ${Number(p.ratingStar).toFixed(1)} / 5.0`);
+      if (p.sales) lines.push(`   📦 Vendas: ${Number(p.sales).toLocaleString('pt-BR')} unidades`);
       if (p.shopName) lines.push(`   🏬 Loja: ${p.shopName}`);
       lines.push(`   🔗 Ver Oferta: ${p.offerLink || p.productLink}`);
       lines.push('');

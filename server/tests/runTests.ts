@@ -240,7 +240,7 @@ async function main() {
   // 8. TESTE DO CONVERSOR DE LINKS DE AFILIADO
   await runTest('Conversor de Links: Validação segura e aviso quando sem credenciais', async () => {
     // Testa com URL válida
-    const linkRes = await shopeeClient.generateShortLink('https://shopee.com.br/product/123/456', ['test-tag']);
+    const linkRes = await shopeeClient.generateShortLink('https://shopee.com.br/product/123/456', ['testtag']);
 
     // Valida que o aviso de conformidade está presente mesmo se não houver credenciais
     if (!linkRes.affiliateDisclaimer.includes('Este é um link de afiliado')) {
